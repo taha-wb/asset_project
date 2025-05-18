@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="static/style-form.css">
+    <title>Create Asset</title>
+</head>
+<body>
+   <div class="container">
+    <form action="/create_asset" method="POST">
+
+        <label for="">Device Type:</label>
+        <input type="text" name="type" id="device-type" >
+
+        <label for="">Device Description:</label>
+        <input type="text" name="description">
+
+
+        <label for="">S/N:</label>
+        <input type="text" name="serial">
+
+
+        <label for="">Department:</label>
+        <select name="department" id="">
+            <option value="Finance" name="action">Finance</option>
+            <option value="IT" name="action">IT</option>
+            <option value="Operation" name="action">Operation</option>
+            <option value="Commercial"name="action">Commercial</option>
+            <option value="HR" name="action">HR </option>
+            <option value="Admin" name="action">Admin</option>
+        </select>
+
+        
+        
+
+        <button type="submit">create</button>
+    </form>
+   </div> 
+</body>
+</html>

@@ -1,0 +1,620 @@
+from flask import Flask, render_template, request, send_file , session
+import pandas as pd
+from datetime import datetime
+import json
+from docx import Document
+from docx.shared import Inches , Cm , Pt, RGBColor
+from docx.oxml.ns import qn
+from docx.oxml import OxmlElement
+from docx.enum.table import WD_ALIGN_VERTICAL
+from docx.enum.text import WD_PARAGRAPH_ALIGNMENT , WD_ALIGN_PARAGRAPH
+from io import BytesIO
+from datetime import date
+from openpyxl import load_workbook
+app = Flask(__name__)
+app.secret_key = 'your_secret_key_here'
+
+
+
+@app.route('/')
+def index():
+    return render_template('index.html')
+
+@app.route('/submit_category', methods=['POST'])
+def submit_category():
+   category = request.form.get('category')
+   if category == 'assets':
+        return render_template('assets.html')
+   elif category == 'create-asset':
+        return render_template('create-asset.html')
+   elif category == 'create-employee':
+        return render_template('create-employee.html')
+   return(category)
+
+@app.route('/submit_category_lookup', methods=['POST'])
+def submit_category_lookup():
+   category = request.form.get('category')
+   if category == 'inventory':
+      df = pd.read_excel("Inventory.xlsx")
+      df.columns = df.columns.str.strip()
+      results = df[["Device Type", "Description", "S/N","Department" ,"Previous User Name", "Condition"]]
+      devices = results.to_dict(orient="records")
+      return render_template("main-inventory.html", devices = devices)
+   elif category == 'by-employee':
+        return render_template('employee-lookup.html')
+   
+
+
+# create new employee 
+@app.route('/create_employee', methods=['POST'])
+def create_employee():
+    session['id'] = request.form['id']  # Get input from form
+    session['name'] = request.form['name']  # Get input from form
+    session['department'] = request.form['department']  # Get input from form
+    df = pd.read_excel("Inventory.xlsx")
+    devices = df[["Device Type", "Description", "S/N","Department", "Previous User Name", "Condition"]].to_dict(orient="records")
+    return render_template("inventory.html", devices = devices)
+    
+
+
+
+
+
+
+
+
+# create new asset  
+@app.route('/create_asset', methods=['POST'])
+def create_asset():
+    print(request.values.get('type'))
+    device_type = request.form.get('type')
+    device_des = request.form.get('description')
+    device_serial = request.form.get('serial')
+    device_department = request.form.get('department')
+
+    new_row={
+        "Department": device_department,
+        "Device Type":  device_type,
+        "Description": device_des,
+        "S/N": device_serial,
+        "Previous User Name": "N/A",
+        "Location":"IT",
+        "Condition": "New"
+
+
+    }
+  
+    df = pd.read_excel("Inventory.xlsx")
+    df = pd.concat([df, pd.DataFrame([new_row])], ignore_index=True)
+
+    # Save back to Excel
+    df.to_excel("Inventory.xlsx",index=False)
+    
+
+    
+    
+    results = df[["Device Type", "Description", "S/N","Department", "Previous User Name", "Condition"]]
+    devices = results.to_dict(orient="records")
+    return render_template("main-inventory.html", devices = devices)
+   
+
+
+# open employee items
+
+@app.route('/submit', methods=['POST'])
+def submit():
+    session['id'] = request.form['emp_id']  # Get input from form
+    df = pd.read_excel("Assetes & Custody.xlsx")
+    df["Employee ID"].fillna(method='ffill', inplace=True)
+    if not df[df["Employee ID"] == int(session.get('id'))].empty:
+        result = df[df["Employee ID"] == int(session.get('id'))]
+        devices = result[["Device Type", "Description", "S/N"]].to_dict(orient='records')
+        session['name'] = result["Employee Name"].to_list()[0]
+        session['department']= result["Department"].to_list()[0]
+        return render_template('form.html', name = session.get('name') , emp_department = session['department'] ,emp_id = session.get('id'), assets=devices)
+    
+    return render_template('create-employee.html')
+
+
+    
+    
+
+
+
+# open inventory
+
+@app.route('/inventory', methods=['POST'])
+def form():
+    df = pd.read_excel("Inventory.xlsx")
+    df.columns = df.columns.str.strip()
+    # df["Device Type"].fillna(method='ffill', inplace=True)
+    action = request.form.get('action')
+    if action == 'receiving':
+     devices = df[["Device Type", "Description", "S/N","Department", "Previous User Name", "Condition"]].to_dict(orient="records")
+     return render_template("inventory.html", devices = devices)
+   # device_data = devices[["Device Type", "Description", "S/N","Previous User Name", "Condition"]].to_dict(orient='records')
+    elif action == 'handover':
+             df = pd.read_excel("Assetes & Custody.xlsx")
+             result = df[df["Employee ID"] == int(session.get('id'))]
+             devices = result[["Device Type", "Description", "S/N"]].to_dict(orient='records')
+             return render_template("generated_form.html", name = session.get('name') , emp_department = session['department'], emp_id = session.get('id') ,  devices = devices)
+
+        
+    
+
+    
+   
+
+        
+
+
+
+
+@app.route('/submit_receiving_form', methods=['POST'])
+def submit_receiving_form():
+    df = pd.read_excel("Assetes & Custody.xlsx")
+    df.columns = df.columns.str.strip()
+    # Get the employee information
+    emp_name = session.get('name')
+    emp_id = session.get('id')
+    emp_department = session['department']
+    receive_date = date.today()
+    
+    # Get the selected devices (convert from JSON string back to dictionary)
+    selected_raw = request.form.getlist('selected_devices')
+    selected_devices = [json.loads(device) for device in selected_raw]
+
+
+ 
+
+
+  
+
+    # df = pd.read_excel("Assetes & Custody.xlsx",sheet_name="Assets")
+    
+    # result = df[df["Employee ID"] == int(session.get('id'))]
+
+
+
+
+    
+
+    # Create a Word document
+    doc = Document()
+    section = doc.sections[0]
+    header = section.header
+    paragraph = header.paragraphs[0]
+    run = paragraph.add_run()
+    run.add_picture('sources\mel-logo.png')
+    
+    heading = doc.add_heading(level=1)
+    heading.alignment = WD_PARAGRAPH_ALIGNMENT.CENTER
+    run = heading.add_run('RECEIVING FORM')
+    run.bold = True
+    run.underline = True
+    font = run.font
+    font.name = 'Bookman Old Style'          # Set font name
+    font.size = Pt(26)
+    run.font.bold = True           # Set font size (points)
+    font.color.rgb = RGBColor(0, 0, 0)
+        
+    
+
+    # Add employee information
+    paragraph = doc.add_paragraph()
+    paragraph.add_run('Name:   \t').font.size = Pt(14)
+    
+    paragraph.add_run(emp_name).font.size = Pt(14)
+    paragraph = doc.add_paragraph()
+    paragraph.add_run('ID:   \t\t').font.size = Pt(14)
+    paragraph.add_run(emp_id).font.size = Pt(14)
+    paragraph = doc.add_paragraph()
+    paragraph.add_run(f'Dept: \t\t{emp_department}').font.size = Pt(14)
+    paragraph = doc.add_paragraph()
+    paragraph.add_run(f'Date: \t\t{receive_date}').font.size = Pt(14)
+    
+    doc.add_paragraph('\n')
+    
+
+    # Add a table for the devices
+    table = doc.add_table(rows=1, cols=2)
+   
+    table.autofit = True
+    table.style = 'Table Grid'
+    hdr_cells = table.rows[0].cells
+
+    hdr_cells[0].width = Inches(7)
+    paragraph = hdr_cells[0].paragraphs[0]
+    run = paragraph.add_run('Description')
+    run.bold = True
+    font = run.font
+    run.font.bold = True
+    font.name = 'Bookman Old Style'          # Set font name
+    font.size = Pt(14)           # Set font size (points)
+    font.color.rgb = RGBColor(0, 0, 0)
+    paragraph.alignment = WD_PARAGRAPH_ALIGNMENT.CENTER
+
+    hdr_cells[1].width = Inches(1)
+    paragraph =  hdr_cells[1].paragraphs[0]
+    run = paragraph.add_run('Condition')
+    run.bold = True
+    font.name = 'Bookman Old Style'          # Set font name
+    font.size = Pt(14)  
+    run.font.bold = True         # Set font size (points)
+    font.color.rgb = RGBColor(0, 0, 0)
+    paragraph.alignment = WD_PARAGRAPH_ALIGNMENT.CENTER
+ 
+    
+
+    # Add the devices to the table
+    for index,  device in enumerate(selected_devices):
+        row_cells = table.add_row().cells
+        row_cells[0].text = f"{index+1}. {device['Device Type']} {device['Description']}, S/N: {device['S/N']}"
+       
+        row_cells[0].vertical_alignment = WD_ALIGN_VERTICAL.CENTER
+        paragraph = row_cells[0].paragraphs[0]
+        # paragraph.alignment = WD_PARAGRAPH_ALIGNMENT.CENTER
+
+        row_cells[1].text = device['Condition']
+        row_cells[1].vertical_alignment = WD_ALIGN_VERTICAL.CENTER
+        paragraph = row_cells[1].paragraphs[0]
+        paragraph.alignment = WD_PARAGRAPH_ALIGNMENT.CENTER
+
+    row_cells = table.add_row().cells  
+    paragraph =  row_cells[0].paragraphs[0]
+    run = paragraph.add_run("**** nothing Follows ****" )
+    run.bold = True
+
+
+    
+    # add signature box 
+    doc.add_paragraph('\n')
+   
+    
+    paragraph = doc.add_paragraph()
+    run = paragraph.add_run()
+    run.add_picture('static/images/footer + ack.png', width=Inches(6), height=Inches(3.2))
+
+    # paragraph.alignment = WD_PARAGRAPH_ALIGNMENT.RIGHT
+    # doc.add_paragraph('\n')
+    
+    
+    #add acknowledgements boxes
+
+        # table = doc.add_table(rows=1, cols=4)
+        
+        # # Access the two cells
+        # cell1 = table.rows[0].cells[0]
+        # cell2 = table.rows[0].cells[2]
+    
+        # # Add pictures into the cells
+        # cell1.paragraphs[0].add_run().add_picture('static\\images\\acknowledgement-box-en.png', width=Inches(2.5), height=Inches(1.4))
+        # cell2.paragraphs[0].add_run().add_picture('static\\images\\acknowledgement-box-ar.png', width=Inches(2.5), height=Inches(1.4))
+        # cell1.paragraphs[0].alignment = WD_PARAGRAPH_ALIGNMENT.RIGHT
+        # cell2.paragraphs[0].alignment = WD_PARAGRAPH_ALIGNMENT.RIGHT
+
+   
+    footer = doc.sections[0].footer
+    paragraph = footer.paragraphs[0]
+    run = paragraph.add_run()
+    run.add_picture('static\\images\\footer.png', width=Inches(7))
+
+    # Save the document to a BytesIO object
+    doc_stream = BytesIO()
+    doc.save(doc_stream)
+    doc_stream.seek(0)
+
+
+
+
+
+    # assign devices to employee in the master file
+    
+    new_row = {}
+
+    if len(selected_devices) == 1:
+        new_row['Employee Name'] =  emp_name
+        new_row['Employee ID'] =  int(emp_id)
+        new_row['Department'] = emp_department 
+        new_row['Device Type'] =   selected_devices[index]['Device Type']
+        new_row['Description'] =  selected_devices[index]["Description"]
+        new_row['S/N'] =  selected_devices[index]['S/N']
+
+    elif  len(selected_devices) > 1:   
+        for index ,device in enumerate(selected_devices):
+            new_row[index]['Employee Name'] =  emp_name
+            new_row[index]['Employee ID'] = int(emp_id)
+            new_row[index]['Department'] = emp_department 
+            new_row[index]['Device Type'] =   selected_devices[index]['Device Type']
+            new_row[index]['Description'] =  selected_devices[index]["Description"]
+            new_row[index]['S/N'] =  selected_devices[index]['S/N']
+
+   
+    
+  
+   
+    df = pd.concat([df, pd.DataFrame([new_row])], ignore_index=True)
+
+    # Save back to Excel
+    df.to_excel("Assetes & Custody.xlsx",index=False)
+
+    # Load the workbook and sheet
+    wb = load_workbook("Assetes & Custody.xlsx")
+    ws = wb.active  
+
+    # Auto-adjust column widths
+    for column_cells in ws.columns:
+        max_length = 0
+        column = column_cells[0].column_letter  
+        for cell in column_cells:
+            try:
+                if cell.value:
+                    max_length = max(max_length, len(str(cell.value)))
+            except:
+                pass
+        adjusted_width = (max_length + 2)
+        ws.column_dimensions[column].width = adjusted_width
+
+    # Save again
+    wb.save("Assetes & Custody.xlsx")
+
+
+    # delete devices from inventory
+
+    df = pd.read_excel("Inventory.xlsx")
+    removed_device_serial = selected_devices[0]["S/N"]
+    df = df[df['S/N'] != removed_device_serial]
+
+    df.to_excel('Inventory.xlsx', index=False)
+    wb = load_workbook("Inventory.xlsx")
+    ws = wb.active  
+
+    # Auto-adjust column widths
+    for column_cells in ws.columns:
+        max_length = 0
+        column = column_cells[0].column_letter  
+        for cell in column_cells:
+            try:
+                if cell.value:
+                    max_length = max(max_length, len(str(cell.value)))
+            except:
+                pass
+        adjusted_width = (max_length + 2)
+        ws.column_dimensions[column].width = adjusted_width
+
+    # Save again
+    wb.save("Inventory.xlsx")
+
+    
+
+    
+
+
+    # Send the file as a response
+    return send_file(doc_stream, as_attachment=True, download_name=F"receiving_form_{emp_id}_{emp_name[0:2]}.docx", mimetype="application/vnd.openxmlformats-officedocument.wordprocessingml.document")
+
+
+    
+
+
+@app.route('/submit_handover_form', methods=['POST'])
+def submit_handover_form():
+  
+    # Get the selected devices (convert from JSON string back to dictionary)
+    selected_raw = request.form.getlist('selected_devices')
+    if  selected_raw:
+        selected_devices = [json.loads(device) for device in selected_raw]
+        
+        # Get the employee information
+        emp_name = session.get('name')
+        emp_id = session.get('id')
+        emp_department = session['department']
+        handover_date = date.today()
+
+
+    
+
+
+        # add devices to inventory
+
+
+        df = pd.read_excel("Inventory.xlsx")
+        new_row={
+            "Previous User Name": emp_name,
+            "Previous User EN#": int(emp_id),
+            "Device Type": selected_devices[0]['Device Type'],
+            "Description": selected_devices[0]["Description"],
+            "S/N": selected_devices[0]['S/N']
+        }
+    
+    
+        df = pd.concat([df, pd.DataFrame([new_row])], ignore_index=True)
+
+        # Save back to Excel
+        df.to_excel("Inventory.xlsx",index=False)
+
+        # Load the workbook and sheet
+        wb = load_workbook("Inventory.xlsx")
+        ws = wb.active  
+
+        # Auto-adjust column widths
+        for column_cells in ws.columns:
+            max_length = 0
+            column = column_cells[0].column_letter  
+            for cell in column_cells:
+                try:
+                    if cell.value:
+                        max_length = max(max_length, len(str(cell.value)))
+                except:
+                    pass
+            adjusted_width = (max_length + 2)
+            ws.column_dimensions[column].width = adjusted_width
+
+        # Save again
+        wb.save("Inventory.xlsx")
+
+
+
+        # delete devices of employee from the master file
+
+        df = pd.read_excel("Assetes & Custody.xlsx")
+        for device in selected_devices :
+         removed_device_serial = device["S/N"]
+
+        df = df[df['S/N'] != removed_device_serial]
+
+        df.to_excel('Assetes & Custody.xlsx', index=False)
+        # Load the workbook and sheet
+        wb = load_workbook("Assetes & Custody.xlsx")
+        ws = wb.active  
+
+        # Auto-adjust column widths
+        for column_cells in ws.columns:
+            max_length = 0
+            column = column_cells[0].column_letter  
+            for cell in column_cells:
+                try:
+                    if cell.value:
+                        max_length = max(max_length, len(str(cell.value)))
+                except:
+                    pass
+            adjusted_width = (max_length + 2)
+            ws.column_dimensions[column].width = adjusted_width
+
+        # Save again
+        wb.save("Assetes & Custody.xlsx")
+
+
+
+        # Create a Word document
+        doc = Document()
+        section = doc.sections[0]
+        header = section.header
+        paragraph = header.paragraphs[0]
+        run = paragraph.add_run()
+        run.add_picture('sources\mel-logo.png')
+        
+        heading = doc.add_heading(level=1)
+        heading.alignment = WD_PARAGRAPH_ALIGNMENT.CENTER
+        run = heading.add_run('HANDOVER FORM')
+        run.bold = True
+        run.underline = True
+        font = run.font
+        font.name = 'Bookman Old Style'          # Set font name
+        font.size = Pt(26)  
+        run.font.bold = True            # Set font size (points)
+        font.color.rgb = RGBColor(0, 0, 0)
+        
+
+        # Add employee information
+        paragraph = doc.add_paragraph()
+        paragraph.add_run('Name:   \t').font.size = Pt(14)
+    
+        paragraph.add_run(emp_name).font.size = Pt(14)
+        paragraph = doc.add_paragraph()
+        paragraph.add_run('ID:   \t\t').font.size = Pt(14)
+        paragraph.add_run(emp_id).font.size = Pt(14)
+        paragraph = doc.add_paragraph()
+        paragraph.add_run(f'Dept: \t\t{emp_department}').font.size = Pt(14)
+        paragraph = doc.add_paragraph()
+        paragraph.add_run(f'Date: \t\t{handover_date}').font.size = Pt(14)
+    
+        doc.add_paragraph('\n')
+
+        # Add a table for the devices
+        table = doc.add_table(rows=1, cols=3)
+        table.style = 'Table Grid'
+        hdr_cells = table.rows[0].cells
+       
+        hdr_cells[0].width = Inches(6)
+        paragraph = hdr_cells[0].paragraphs[0]
+        run = paragraph.add_run("List of Items")
+        run.bold = True
+        font.name = 'Bookman Old Style'          # Set font name
+        font.size = Pt(14)           # Set font size (points)
+        font.color.rgb = RGBColor(0, 0, 0)
+        paragraph.alignment = WD_PARAGRAPH_ALIGNMENT.CENTER
+
+        hdr_cells[1].width = Inches(1)
+        paragraph = hdr_cells[1].paragraphs[0]
+        run = paragraph.add_run("S/N")
+        run.bold = True
+        font.name = 'Bookman Old Style'          # Set font name
+        font.size = Pt(14)  
+        run.font.bold = True         # Set font size (points)
+        font.color.rgb = RGBColor(0, 0, 0)
+        paragraph.alignment = WD_PARAGRAPH_ALIGNMENT.CENTER
+        
+       
+        hdr_cells[2].width = Inches(1)
+        paragraph = hdr_cells[2].paragraphs[0]
+        run = paragraph.add_run("Remarks/Password")
+        run.bold = True
+        font.name = 'Bookman Old Style'          # Set font name
+        font.size = Pt(14)  
+        run.font.bold = True         # Set font size (points)
+        font.color.rgb = RGBColor(0, 0, 0)
+        paragraph.alignment = WD_PARAGRAPH_ALIGNMENT.CENTER
+        
+        
+    
+        
+        # Add the devices to the table
+        for index,  device in enumerate(selected_devices):
+            row_cells = table.add_row().cells
+            row_cells[0].text = f"{index+1}. {device['Description']}"
+            # row_cells[0].vertical_alignment = WD_ALIGN_VERTICAL.CENTER
+            paragraph = row_cells[0].paragraphs[0]
+            # paragraph.alignment = WD_PARAGRAPH_ALIGNMENT.CENTER
+
+    
+            row_cells[1].text = device['S/N']
+            row_cells[1].vertical_alignment = WD_ALIGN_VERTICAL.CENTER
+            paragraph = row_cells[1].paragraphs[0]
+            paragraph.alignment = WD_PARAGRAPH_ALIGNMENT.CENTER
+
+            # row_cells[3].text = device['S/N']
+            # row_cells[3].vertical_alignment = WD_ALIGN_VERTICAL.CENTER
+            # paragraph = row_cells[3].paragraphs[0]
+            # paragraph.alignment = WD_PARAGRAPH_ALIGNMENT.CENTER
+            
+        
+        row_cells = table.add_row().cells  
+        row_cells[0].text = "Others:" 
+           
+
+
+
+        # add signature box 
+        doc.add_paragraph('\n')
+        doc.add_paragraph('\n')
+        doc.add_paragraph('\n')
+        paragraph = doc.add_paragraph()
+        run = paragraph.add_run()
+        run.add_picture('static/images/handover-sign.png',width=Inches(6.2))
+
+
+        footer = doc.sections[0].footer
+        paragraph = footer.paragraphs[0]
+        run = paragraph.add_run()
+        run.add_picture('static\\images\\footer.png', width=Inches(7))
+
+
+        # Save the document to a BytesIO object
+        doc_stream = BytesIO()
+        doc.save(doc_stream)
+        doc_stream.seek(0)
+        
+        # Send the file as a response
+        return send_file(doc_stream, as_attachment=True, download_name=F"handover_form_{emp_id}_{emp_name[0:2]}.docx", mimetype="application/vnd.openxmlformats-officedocument.wordprocessingml.document")
+
+    
+    return("No selected Devices")
+
+
+
+
+
+
+if __name__ == '__main__':
+    app.run(debug=True)

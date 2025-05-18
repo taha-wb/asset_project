@@ -1,0 +1,134 @@
+body{
+    display: flex;
+    flex-direction: column; 
+    width: 100%;
+    height: auto;
+    padding: 0 9%;
+    
+    justify-content: center; 
+}
+
+nav {
+    height: 100px;
+    width: 100%;
+    
+    margin-bottom: 50px;
+}
+
+nav img {
+    
+    width: 200px;
+    height: 100%;
+}
+
+
+
+div.landing-container {
+    display: flex;
+    width: 100%;
+    height: 100%;
+    justify-content: center;
+   
+   
+}
+
+div.landing-container form {
+    height: 50%;
+    width: 90%;
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+   
+   
+
+}
+div.landing-container form label {
+   font-size: 2rem;
+   
+
+}
+div.landing-container form select {
+  
+    width: 30%;
+    height: 50px;
+
+}
+
+
+
+div.lookup-container form{
+    height: 50%;
+    width: 90%;
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    font-size: 2rem;
+}
+div.lookup-container form input{
+    width: 30%;
+    height: 50px;
+}
+div.handover-container {
+    width: 100%;
+    height: 100vh;
+   
+    display: flex;
+    flex-direction: column;
+    
+    
+    
+}
+
+div.handover-container  form{
+    height: 50%;
+    width: 90%;
+   
+    
+}
+
+button {
+    width: 150px;
+    border-radius: .2rem;
+    height: 50px;
+}
+h1.text-center {
+
+    margin-bottom: 2rem;
+
+}
+
+div.handover-containerd form {
+   
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    align-items: center;
+    height: 30%;
+    
+    width: 25%;
+}
+div.handover-containerd form label {
+    font-size: 3rem;
+}
+
+div.handover-containerd form select {
+    width: 60%;
+}
+
+div.handover-containerd form button{
+    margin-top: 2rem;
+    width: 40%;
+}
+
+div.handover-containerd th {
+    min-width: 70px;
+}
+
+
+
+
+td.emp-not-found {
+
+    text-align: center;
+    font-size: larger;
+}

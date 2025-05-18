@@ -1,0 +1,57 @@
+body{
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    
+    height: 100vh;
+    padding: 0 9%;
+    
+    
+}
+
+
+div.container {
+    width: 50%;
+    height: 400px;
+    
+    
+}
+
+form {
+    padding: 1rem;
+    display: flex;
+    flex-direction: column;
+   
+    align-items: center;
+}
+
+form label{
+    font-size: large;
+    padding: .5rem;
+}
+form select{
+    height: 2.5rem;
+    width: 270px;
+    margin-bottom: 2rem;
+    padding: .5rem;
+   font-size: large;
+}
+
+form input{
+    height: 2rem;
+    width: 250px;
+    margin-bottom: 2rem;
+    padding: .5rem;
+   font-size: large;
+}
+
+button {
+    width: 250px;
+    border-radius: .2rem;
+    height: 50px;
+    font-size: large;
+}
+
+button:hover{
+    cursor: pointer;
+}
