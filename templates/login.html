@@ -1,0 +1,24 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <title>Login</title>
+</head>
+<body>
+    <header>
+        <img class="logo" src="{{ url_for('static', filename='images/mel_logo.png') }}" alt="mel-logo">
+       
+    </header>
+
+    <section class="container">
+      <form method="post" action="{{url_for('login')}}">
+        <input name="username" type="text" placeholder="Username" required>
+        <input name="password" type="password" placeholder="Password" required>
+        
+        <button type="submit">Log In</button>
+      </form>
+    </section>
+</body>
+</html>

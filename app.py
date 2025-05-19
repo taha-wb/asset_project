@@ -1,4 +1,11 @@
-from flask import Flask, render_template, request, send_file , session
+from flask import Flask, abort, render_template, request, send_file , session, redirect, url_for, flash
+
+from email_validator import validate_email, EmailNotValidError
+from flask_login import login_user, logout_user, login_required, current_user
+from flask_sqlalchemy import SQLAlchemy
+from flask_login import LoginManager
+from flask_login import UserMixin
+from werkzeug.security import generate_password_hash, check_password_hash
 import pandas as pd
 from datetime import datetime
 import json
@@ -11,38 +18,161 @@ from docx.enum.text import WD_PARAGRAPH_ALIGNMENT , WD_ALIGN_PARAGRAPH
 from io import BytesIO
 from datetime import date
 from openpyxl import load_workbook
-app = Flask(__name__)
-app.secret_key = 'your_secret_key_here'
 
 
 
+app = Flask(__name__, static_folder='static', static_url_path='/category/static')
+# app.secret_key = 'your_secret_key_here'
+
+
+
+
+#configure SQL Alchamy
+app.config.update(
+    SECRET_KEY = 'your‑very‑secret‑key',
+    SQLALCHEMY_DATABASE_URI = 'sqlite:///users.db',  # or your DB of choice
+    SQLALCHEMY_TRACK_MODIFICATIONS = False
+)
+
+db = SQLAlchemy(app)
+
+
+#user Class 
+class CustomUser(db.Model, UserMixin):
+    id = db.Column(db.Integer, primary_key=True)
+    username = db.Column(db.String(120), unique=True, nullable=False)
+    password_hash = db.Column(db.String(128), nullable=False)
+
+    def set_password(self, password):
+        self.password_hash = generate_password_hash(password)
+
+
+    def check_password(self, password):
+        return check_password_hash(self.password_hash, password)
+    
+
+
+
+
+
+VALID_TEMPLATES = {
+    'assets':          'assets.html',
+    'create-asset':    'create-asset.html',
+    'create-employee': 'create-employee.html',
+}
 @app.route('/')
 def index():
-    return render_template('index.html')
+    return render_template('login.html')
+
+
+
+
+# Login
+@app.route('/login', methods=['GET','POST'])
+def login():
+    if request.method == 'POST':
+        username = request.form.get('username', '').strip()
+        password = request.form.get('password', '')
+        
+        user = CustomUser.query.filter_by(username=username).first()
+        if user and user.check_password(password):
+           
+            flash('Logged in successfully.', 'success')
+            session['username'] = username
+            return render_template('index.html')
+        flash('Invalid email or password.', 'danger')
+        return "Invalid User"
+
+    return render_template('login.html')
+
+
+
+# Register
+# @app.route('/register', methods=['GET','POST'])
+# def register():
+#     if request.method == 'POST':
+#         email = request.form['email']
+#         pw = request.form['password']
+#         # validate email
+#         try:
+#             valid = validate_email(email)
+#             email = valid.email
+#         except EmailNotValidError as e:
+#             flash(str(e), 'danger')
+#             return redirect(url_for('register'))
+
+#         if CustomUser.query.filter_by(email=email).first():
+#             flash('Email already registered.', 'warning')
+#             return redirect(url_for('register'))
+
+#         user = CustomUser(email=email)
+#         user.set_password(pw)
+#         db.session.add(user)
+#         db.session.commit()
+#         flash('Registration successful—please log in.', 'success')
+#         return redirect(url_for('login'))
+
+#     return render_template('register.html')
+
+
+# @app.route('/dashboard')
+# @login_required
+# def dashboard():
+#     if "admin" in session:
+#         return render_template("index.html")
+#     else:
+#        render_template("login.html")
+
+    
+
+# @app.route('/logout')
+# @login_required
+# def logout():
+#     logout_user()
+#     flash('You’ve been logged out.', 'info')
+#     return redirect(url_for('login'))
+
+
+
+
+
+
+
 
 @app.route('/submit_category', methods=['POST'])
-def submit_category():
-   category = request.form.get('category')
-   if category == 'assets':
-        return render_template('assets.html')
-   elif category == 'create-asset':
-        return render_template('create-asset.html')
-   elif category == 'create-employee':
-        return render_template('create-employee.html')
-   return(category)
 
-@app.route('/submit_category_lookup', methods=['POST'])
-def submit_category_lookup():
-   category = request.form.get('category')
-   if category == 'inventory':
-      df = pd.read_excel("Inventory.xlsx")
-      df.columns = df.columns.str.strip()
-      results = df[["Device Type", "Description", "S/N","Department" ,"Previous User Name", "Condition"]]
-      devices = results.to_dict(orient="records")
-      return render_template("main-inventory.html", devices = devices)
-   elif category == 'by-employee':
-        return render_template('employee-lookup.html')
-   
+
+@app.route('/category/<category>')
+def show_category(category):
+    template = VALID_TEMPLATES.get(category)
+    if not template:
+        abort(404)
+    return render_template(template)
+
+
+
+def lookup_inventory():
+    df = pd.read_excel("Inventory.xlsx")
+    df.columns = df.columns.str.strip()
+    results = df[[
+        "Device Type", "Description", "S/N",
+        "Department", "Previous User Name", "Condition"
+    ]]
+    devices = results.to_dict(orient="records")
+    return render_template("main-inventory.html", devices=devices)
+
+def lookup_employees():
+    return render_template("employee-lookup.html")
+CATEGORY_HANDLERS = {
+    'inventory': lookup_inventory,
+    'employees': lookup_employees,
+}
+@app.route('/submit_category_lookup/category/<category>')
+def submit_category_lookup(category):
+   handler = CATEGORY_HANDLERS.get(category)
+   if not handler:
+        abort(404)
+   return handler()
 
 
 # create new employee 
@@ -613,8 +743,31 @@ def submit_handover_form():
 
 
 
+# create users 
+
+def seed_users():
+    users = [
+        {'username': 'admin', 'password': 'Pass123'},
+        {'username': 'guest',   'password': 'G123'},
+        # add as many as you like
+    ]
+
+   
+
+    for u in users:
+        if not CustomUser.query.filter_by(username=u['username']).first():
+            user = CustomUser(username=u['username'])
+            user.set_password(u['password'])
+            db.session.add(user)
+    db.session.commit()
+
+
+
 
 
 
 if __name__ == '__main__':
+    with app.app_context():
+        db.create_all()
+        seed_users()
     app.run(debug=True)

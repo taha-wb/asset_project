@@ -1,4 +1,4 @@
-body{
+/* body{
     display: flex;
     flex-direction: column;
     width: 100%;
@@ -62,4 +62,95 @@ button {
     width: 150px;
     border-radius: .2rem;
     height: 50px;
+} */
+
+:root{
+    --green:#10dbff;
+    --black:#192a56;
+    --light-color:#666;
+    --box-shadow:0 .5rem 1.5rem rgba(0,0,0,.1);
 }
+
+*{
+    font-family: 'Nunito', sans-serif;
+    margin:0; padding:0;
+    box-sizing: border-box;
+    text-decoration: none;
+    outline: none; border:none;
+    text-transform: capitalize;
+    transition: all .2s linear;
+}
+
+html{
+    font-size: 62.5%;
+    overflow-x: hidden;
+    scroll-padding-top: 5.5rem;
+    scroll-behavior: smooth;
+}
+body{
+    padding: 0 0;
+    margin: 0 0;
+
+}
+
+section , header{
+    padding:2rem 9%;
+}
+header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    width: 100%;
+    height: 7rem;
+    box-shadow: var(--box-shadow);
+    position: fixed;
+    z-index: 1111;
+    background: #fff;
+    
+}
+
+header .logo {
+    width: 200px;
+    height: 60px;
+}
+header .logo i {
+    color: var(--green);
+  }
+
+
+section {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+     width: 100%;
+    position: absolute;
+    margin-top: 20%;
+   
+  }
+ul.nav-list {
+    width: 100%;
+    display: flex;
+    transition: .4s linear;
+    justify-content: center;
+   
+}
+ .nav-list li {
+   list-style: none;
+}
+ .nav-list a {
+    padding: 1rem 2rem;
+    border-radius: .5rem;
+    font-size: 1.8rem;
+    color: var(--light-color);
+    text-decoration: none;
+}
+ ul  a.active{
+    background: var(--green);
+    color: #fff;
+}
+ul a:hover{
+    background: var(--green);
+    color: #fff;
+    
+}
+

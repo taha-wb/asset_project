@@ -3,12 +3,16 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <link rel="stylesheet" href="static/style-form.css">
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
     <title>Create Asset</title>
 </head>
 <body>
-   <div class="container">
-    <form action="/create_asset" method="POST">
+    <header>
+        <img class="logo" src="{{ url_for('static', filename='images/mel_logo.png') }}" alt="mel-logo">
+       
+    </header>
+   <section class="container">
+    <form class="create" action="/create_asset" method="POST">
 
         <label for="">Device Type:</label>
         <input type="text" name="type" id="device-type" >
@@ -35,7 +39,8 @@
         
 
         <button type="submit">create</button>
+        <a href="/" class="go-back">Go Back</a>
     </form>
-   </div> 
+</section> 
 </body>
 </html>

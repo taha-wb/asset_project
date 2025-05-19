@@ -1,4 +1,4 @@
-body{
+/* body{
     display: flex;
     flex-direction: column; 
     width: 100%;
@@ -131,4 +131,194 @@ td.emp-not-found {
 
     text-align: center;
     font-size: larger;
+} */
+
+
+:root{
+    --green:#10dbff;
+    --black:#192a56;
+    --light-color:#666;
+    --box-shadow:0 .5rem 1.5rem rgba(0,0,0,.1);
+}
+
+*{
+    font-family: 'Nunito', sans-serif;
+    margin:0; padding:0;
+    box-sizing: border-box;
+    text-decoration: none;
+    outline: none; border:none;
+    text-transform: capitalize;
+    transition: all .2s linear;
+}
+
+html{
+    font-size: 62.5%;
+    overflow-x: hidden;
+    scroll-padding-top: 5.5rem;
+    scroll-behavior: smooth;
+}
+body{
+    padding: 0 0;
+    margin: 0 0;
+
+}
+
+section , header{
+    padding:2rem 9%;
+}
+header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    width: 100%;
+    height: 7rem;
+    box-shadow: var(--box-shadow);
+    position: fixed;
+    top: 0%;
+    z-index: 1111;
+    background: #fff;
+    
+}
+
+header .logo {
+    width: 200px;
+    height: 60px;
+}
+
+
+section {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    margin-top: 10%;
+    
+}
+   
+
+ul.nav-list {
+    width: 100%;
+    display: flex;
+    transition: .4s linear;
+    justify-content: center;
+   
+   
+}
+ .nav-list li {
+   list-style: none;
+   margin-right: 10px;
+   
+}
+ .nav-list a {
+    padding: 1rem 2rem;
+    border-radius: .5rem;
+    font-size: 1.8rem;
+    color: #fff;
+    background: var(--black);
+    text-decoration: none;
+    border: .5px #192a56 solid;
+    width: 300px;
+}
+ ul  a.active{
+    background: var(--black);
+    color: #fff;
+    
+}
+ul a:hover{
+    letter-spacing: .1rem;
+    color: #fff;
+    
+}
+
+
+section.container form{
+    height: auto;
+    width: 90%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 1rem;
+    font-size: 2rem;
+    margin-right: 0;
+    border-radius: .5rem;
+    border: .1rem solid rgba(0,0,0,.2);
+    box-shadow: var(--box-shadow);
+    background:#fff;
+    padding: 1.5rem;
+    margin: 0 auto;
+    
+}
+section.container form.create table td input{
+    width: 50px;
+    
+}
+section.container form label{
+     padding: .5rem 0;
+    font-size: 1.5rem;
+    color: var(--light-color);
+    display: block;
+}
+section.container form input{
+    width: 300px;
+    padding: .5rem;
+    color: var(--black);
+    text-transform: none;
+    background: #eee;
+    border-radius: .5rem;
+    margin-bottom: 1rem;
+    
+}
+section.container form input:focus{
+    border: .1rem solid var(--black);
+
+}
+section.container form select{
+     width: 300px;
+    padding: .5rem ;
+    text-align: center;
+    background: #eee;
+    
+}
+
+section.container form select:hover {
+    cursor: pointer;
+}
+button {
+    width: 300px;
+    margin-top: 2rem;
+    margin-bottom: .5rem;
+    padding: 0.8rem 3rem;
+    display: inline-block;
+    color: #fff;
+    font-size: 1.7rem;
+    background: var(--black);
+    border-radius: .5rem;
+    cursor: pointer;
+}
+button:hover {
+   
+    letter-spacing: .1rem;
+}
+a.go-back {
+    width: 300px;
+    margin-top: 2rem;
+    margin-bottom: 1.5rem;
+    padding: 0.8rem 3rem;
+    display: inline-block;
+    color: #fff;
+    font-size: 1.7rem;
+    background: var(--black);
+    border-radius: .5rem;
+    cursor: pointer;
+    text-decoration: none;
+    text-align: center;
+
+}
+
+a.go-back:hover{
+   letter-spacing: .1rem;
+}
+
+table {
+    margin-top: 50px;
 }
