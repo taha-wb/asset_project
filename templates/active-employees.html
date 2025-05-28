@@ -28,7 +28,7 @@
         <table class="table table-striped">
             <thead>
               <tr>
-                
+                <th>select</th>
                 <th>Name</th>
                 <th>Employee ID</th>
                 <th>Department</th>
@@ -42,7 +42,9 @@
                 {% if devices %}
                     {% for device in devices %}
                     <tr> 
-                        
+                        <td>
+                        <input type="checkbox" name="selected_devices" value='{{ device | tojson | safe }}'>
+                        </td>
 
                       <td>{{ loop.index }}.{{ device["Employee Name"] }}</td>
                       <td>{{ device["Employee ID"] }}</td>

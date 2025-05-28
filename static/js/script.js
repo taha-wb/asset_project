@@ -3,10 +3,22 @@ const closeIcon =  document.querySelector(".close-icon");
 const submitSearch = document.querySelector(".search-panel form label i");
 const input = document.querySelector(".search-panel form input"); 
 
+const logoutBtn = document.querySelector("header i.fa-sign-out-alt")
 
 
+logoutBtn.onclick = () => {
+      e.preventDefault();
 
-
+      fetch(`/logout`)
+            .then(response => response.text())
+            .then(html => {
+                // Replace the current body with the new results
+                document.body.innerHTML = html;
+            })
+            .catch(err => {
+                console.error("Search failed:", err);
+            });
+}
 
  srchBtn.onclick = () => {
      document.querySelector(".search-panel").classList.add("active");

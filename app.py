@@ -131,12 +131,11 @@ def debug_session():
 
     
 
-# @app.route('/logout')
-# @login_required
-# def logout():
-#     logout_user()
-#     flash('You’ve been logged out.', 'info')
-#     return redirect(url_for('login'))
+@app.route('/logout')
+
+def logout():
+    session.pop('username', None)
+    return redirect(url_for('login'))
 
 
 
@@ -175,14 +174,21 @@ def lookup_inventory():
 
 
 def lookup_employees():
-    df = pd.read_excel("Assetes & Custody.xlsx")
-    df["Employee ID"].fillna(method='ffill', inplace=True)
-    df.fillna("", inplace=True)
+    # df = pd.read_excel("Assetes & Custody.xlsx")
+    # df["Employee ID"].fillna(method='ffill', inplace=True)
+    # df.fillna("", inplace=True)
 
-    # Include employee and device info
-    devices = df[["Employee Name", "Employee ID", "Department", "Device Type", "Description", "S/N"]].to_dict(orient='records')
+    # # Include employee and device info
+    # devices = df[["Employee Name", "Employee ID", "Department", "Device Type", "Description", "S/N"]].to_dict(orient='records')
     
-    return render_template("active-employees.html",devices=devices)
+    return render_template("employee-lookup.html")
+
+
+
+
+
+
+
 CATEGORY_HANDLERS = {
     'inventory': lookup_inventory,
     'employees': lookup_employees,

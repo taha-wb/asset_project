@@ -50,7 +50,7 @@ header .logo {
     height: 60px;
 }
 
-header .search-btn {
+header .search-btn  {
     color: var(--black);
     font-size: 1.6rem;
     padding: 1.5rem;
@@ -59,7 +59,15 @@ header .search-btn {
     cursor: pointer;
     margin-left: .5rem;
 }
-
+header i.fa-sign-out-alt {
+    color: var(--black);
+     font-size: 1.6rem;
+     padding: 1.5rem;
+      border-radius: 50%;
+      background: #eee;
+      margin-left: .5rem;
+      cursor: pointer;
+}
 .search-panel {
     position: absolute;
     z-index: 1000;
