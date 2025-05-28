@@ -175,7 +175,14 @@ def lookup_inventory():
 
 
 def lookup_employees():
-    return render_template("employee-lookup.html")
+    df = pd.read_excel("Assetes & Custody.xlsx")
+    df["Employee ID"].fillna(method='ffill', inplace=True)
+    df.fillna("", inplace=True)
+
+    # Include employee and device info
+    devices = df[["Employee Name", "Employee ID", "Department", "Device Type", "Description", "S/N"]].to_dict(orient='records')
+    
+    return render_template("active-employees.html",devices=devices)
 CATEGORY_HANDLERS = {
     'inventory': lookup_inventory,
     'employees': lookup_employees,
@@ -205,6 +212,25 @@ def search_inventory():
     ]]
     devices = results.to_dict(orient="records")
     return render_template("main-inventory.html", devices=devices, sn_query=sn_query)
+
+
+@app.route('/search_employee')
+def search_employee():
+    emp_query = request.args.get('emp', '').strip().lower()
+
+    df = pd.read_excel("Assetes & Custody.xlsx")
+    df.columns = df.columns.str.strip()
+    df["Employee ID"] = df["Employee ID"].astype(str)
+
+    if emp_query:
+        df = df[df["Employee ID"].str.lower().str.contains(emp_query)]
+
+    results = df[[
+        "Employee Name", "Employee ID" ,"Department","Device Type" ,"Description", "S/N"
+        
+    ]]
+    devices = results.to_dict(orient="records")
+    return render_template("active-employees.html", devices=devices, emp_query=emp_query)
 
 # create new employee 
 @app.route('/create_employee', methods=['POST'])
