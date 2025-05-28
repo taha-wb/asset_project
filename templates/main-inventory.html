@@ -3,17 +3,27 @@
 <head>
     <title>Receiving Form</title>
         <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta2/css/all.min.css" integrity="sha512-YWzhKL2whUzgiheMoBFwW8CKV4qpHQAEuvilg9FAn5VJUDwKZZxkJNuGM4XkWuk94WCrrwslk8yWNGmY1EduTA==" crossorigin="anonymous" referrerpolicy="no-referrer" />
 
         <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
 </head>
 <body>
     <header>
         <img class="logo" src="{{ url_for('static', filename='images/mel_logo.png') }}" alt="mel-logo">
-       
+         <i class="fas fa-search search-btn"></i>
+       <div class="search-panel">
+            <i class="fas fa-times close-icon"></i>
+            <form method="GET" action="/search">
+            <input type="search" name="sn" placeholder="Search here..." id="search">
+            <label for="search" id="searchIcon"><i class="fas fa-search"></i></label>
+
+        </form>
+    </div> 
     </header>
+     
     <div class="container mt-5">
-        <h1 class="text-center">Available Devices</h1>
-       
+        <h1 class="text-center" style="margin-top: 100px;">Available Devices</h1>
+        
        
         <table class="table table-striped">
             <thead>
@@ -59,5 +69,7 @@
   
     <!-- Bootstrap JS (Optional for interactivity) -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="{{ url_for('static', filename='js/script.js') }}"></script>
+
 </body>
 </html>

@@ -40,7 +40,7 @@ db = SQLAlchemy(app)
 #user Class 
 class CustomUser(db.Model, UserMixin):
     id = db.Column(db.Integer, primary_key=True)
-    username = db.Column(db.String(120), unique=True, nullable=False)
+    username = db.Column(db.String(80), unique=True, nullable=False)
     password_hash = db.Column(db.String(128), nullable=False)
 
     def set_password(self, password):
@@ -62,7 +62,11 @@ VALID_TEMPLATES = {
 }
 @app.route('/')
 def index():
-    return render_template('login.html')
+     if 'username' in session:
+        return render_template('index.html')
+     else:
+        return redirect(url_for('login'))
+
 
 
 
@@ -85,7 +89,9 @@ def login():
 
     return render_template('login.html')
 
-
+@app.route('/debug-session')
+def debug_session():
+    return dict(session)  # or jsonify(session)
 
 # Register
 # @app.route('/register', methods=['GET','POST'])
@@ -154,12 +160,19 @@ def show_category(category):
 def lookup_inventory():
     df = pd.read_excel("Inventory.xlsx")
     df.columns = df.columns.str.strip()
+    
     results = df[[
         "Device Type", "Description", "S/N",
         "Department", "Previous User Name", "Condition"
     ]]
     devices = results.to_dict(orient="records")
+
     return render_template("main-inventory.html", devices=devices)
+
+
+
+
+
 
 def lookup_employees():
     return render_template("employee-lookup.html")
@@ -174,6 +187,24 @@ def submit_category_lookup(category):
         abort(404)
    return handler()
 
+
+@app.route('/search')
+def search_inventory():
+    sn_query = request.args.get('sn', '').strip().lower()
+
+    df = pd.read_excel("Inventory.xlsx")
+    df.columns = df.columns.str.strip()
+    df["S/N"] = df["S/N"].astype(str)
+
+    if sn_query:
+        df = df[df["S/N"].str.lower().str.contains(sn_query)]
+
+    results = df[[
+        "Device Type", "Description", "S/N",
+        "Department", "Previous User Name", "Condition"
+    ]]
+    devices = results.to_dict(orient="records")
+    return render_template("main-inventory.html", devices=devices, sn_query=sn_query)
 
 # create new employee 
 @app.route('/create_employee', methods=['POST'])
@@ -746,21 +777,28 @@ def submit_handover_form():
 # create users 
 
 def seed_users():
-    users = [
+     users = [
         {'username': 'admin', 'password': 'Pass123'},
-        {'username': 'guest',   'password': 'G123'},
-        # add as many as you like
+        {'username': 'Mustafa', 'password': 'Mel@2025$'},
+        {'username': 'Khalid', 'password': 'Mel@2024$'},
     ]
 
-   
-
-    for u in users:
+     for u in users:
+        print(f"Checking if user exists: {u['username']}")
         if not CustomUser.query.filter_by(username=u['username']).first():
+            print(f"Adding user: {u['username']}")
             user = CustomUser(username=u['username'])
             user.set_password(u['password'])
             db.session.add(user)
-    db.session.commit()
+        else:
+            print(f"User already exists: {u['username']}")
 
+     try:
+        db.session.commit()
+        print("All users committed.")
+     except Exception as e:
+        print(f"Commit failed: {e}")
+        db.session.rollback()
 
 
 
@@ -768,6 +806,7 @@ def seed_users():
 
 if __name__ == '__main__':
     with app.app_context():
+        db.drop_all()
         db.create_all()
         seed_users()
     app.run(debug=True)
